@@ -13,14 +13,12 @@ fn copy_all<P1, P2, I>(src_dir: P1, dst_dir: P2, files: I)
 {
     for f in files.into_iter() {
         let src = {
-            let mut p = PathBuf::new();
-            p.push(src_dir.as_ref());
+            let mut p = src_dir.as_ref().to_path_buf();
             p.push(f.as_ref());
             p
         };
         let dst = {
-            let mut p = PathBuf::new();
-            p.push(dst_dir.as_ref());
+            let mut p = dst_dir.as_ref().to_path_buf();
             p.push(f.as_ref());
             p
         };
