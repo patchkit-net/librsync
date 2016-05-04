@@ -19,6 +19,7 @@
 project(librsync)
 cmake_minimum_required(VERSION 2.6)
 
+INCLUDE(CMakeDependentOption)
 
 set(LIBRSYNC_MAJOR_VERSION 2)
 set(LIBRSYNC_MINOR_VERSION 0)
@@ -36,11 +37,6 @@ endif()
 if (NOT CMAKE_SYSTEM_NAME)
 	message(FATAL_ERROR "No target OS set")
 endif()
-
-# Add an option to exclude rdiff executable from build
-# This is useful, because it allows to remove POPT dependency if a user is interested only in the
-# rsync library itself and not in the rdiff executable
-option(BUILD_RDIFF "Whether or not to build rdiff executable" ON)
 
 # Add an option to include compression support
 option(ENABLE_COMPRESSION "Whether or not to build with compression support" OFF)
@@ -84,6 +80,7 @@ endif (NOT ENABLE_COMPRESSION)
 include ( CheckFunctionExists )
 check_function_exists ( alloca HAVE_ALLOCA )
 check_function_exists ( fseeko HAVE_FSEEKO )
+check_function_exists ( fseeko64 HAVE_FSEEKO64 )
 check_function_exists ( memmove HAVE_MEMMOVE )
 check_function_exists ( memset HAVE_MEMSET )
 check_function_exists ( strchr HAVE_STRCHR )
@@ -93,6 +90,7 @@ include(CheckTypeSize)
 check_type_size ( "long" SIZEOF_LONG )
 check_type_size ( "long long" SIZEOF_LONG_LONG )
 check_type_size ( "off_t" SIZEOF_OFF_T )
+check_type_size ( "off64_t" SIZEOF_OFF64_T )
 check_type_size ( "size_t" SIZEOF_SIZE_T )
 check_type_size ( "unsigned int" SIZEOF_UNSIGNED_INT )
 check_type_size ( "unsigned long" SIZEOF_UNSIGNED_LONG )
@@ -102,7 +100,10 @@ check_type_size ( "unsigned short" SIZEOF_UNSIGNED_SHORT )
 # rs_long_t is that we need to be able to seek to it, which relates to
 # long file support. With fseeko, rs_long_t should be off_t, otherwise
 # it should be long.
-if ( HAVE_SYS_TYPES_H AND LONG_LONG )
+if ( HAVE_FSEEKO64 AND SIZEOF_OFF64_T )
+  set( RS_LONG_T "off64_t" )
+  message (STATUS "RS_LONG_T = off64_t")
+elseif ( HAVE_SYS_TYPES_H AND LONG_LONG )
   set( RS_LONG_T LONG_LONG )
   message (STATUS "RS_LONG_T = ${LONG_LONG}")
 else()
@@ -146,6 +147,11 @@ find_package(POPT)
 if (POPT_FOUND)
   include_directories(${POPT_INCLUDE_DIRS})
 endif (POPT_FOUND)
+
+# Add an option to exclude rdiff executable from build
+# This is useful, because it allows to remove POPT dependency if a user is interested only in the
+# rsync library itself and not in the rdiff executable
+cmake_dependent_option(BUILD_RDIFF "Whether or not to build rdiff executable" ON "POPT_FOUND" OFF)
 
 # Find BZIP
 find_package (BZip2)
