@@ -281,7 +281,7 @@ set(rsync_LIB_SRCS
     src/whole.c
     src/blake2b-ref.c)
 
-add_library(rsync SHARED ${rsync_LIB_SRCS})
+add_library(rsync STATIC ${rsync_LIB_SRCS})
 
 # Optionally link zlib and bzip2 if
 # - compression is enabled
