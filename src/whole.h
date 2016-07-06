@@ -21,3 +21,5 @@
 
 
 rs_result rs_whole_run(rs_job_t *job, FILE *in_file, FILE *out_file);
+
+__declspec(dllexport) rs_result rs_rdiff_delta(char* sig_name, char* new_name, char* delta_name);

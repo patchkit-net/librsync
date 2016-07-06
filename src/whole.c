@@ -165,3 +165,32 @@ rs_result rs_patch_file(FILE *basis_file, FILE *delta_file, FILE *new_file,
 
     return r;
 }
+
+rs_result rs_rdiff_delta(char* sig_name, char* new_name, char* delta_name)
+{
+	FILE            *sig_file, *new_file, *delta_file;
+	rs_result       result;
+	rs_signature_t  *sumset;
+	rs_stats_t      stats;
+
+	sig_file = rs_file_open(sig_name, "rb");
+	new_file = rs_file_open(new_name, "rb");
+	delta_file = rs_file_open(delta_name, "wb");
+
+	result = rs_loadsig_file(sig_file, &sumset, &stats);
+	if (result != RS_DONE)
+		return result;
+
+	if ((result = rs_build_hash_table(sumset)) != RS_DONE)
+		return result;
+
+	result = rs_delta_file(sumset, new_file, delta_file, &stats);
+
+	rs_free_sumset(sumset);
+
+	rs_file_close(delta_file);
+	rs_file_close(new_file);
+	rs_file_close(sig_file);
+
+	return result;
+}
