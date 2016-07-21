@@ -166,6 +166,27 @@ rs_result rs_patch_file(FILE *basis_file, FILE *delta_file, FILE *new_file,
     return r;
 }
 
+rs_result rs_rdiff_sig(char *basis_name, char *sig_name)
+{
+    FILE            *basis_file, *sig_file;
+    rs_stats_t      stats;
+    rs_result       result;
+    rs_long_t       sig_magic;
+
+    basis_file = rs_file_open(basis_name, "rb");
+    sig_file = rs_file_open(sig_name, "wb");
+
+    result = rs_sig_file(basis_file, sig_file, RS_DEFAULT_BLOCK_LEN, 0,
+        RS_BLAKE2_SIG_MAGIC, &stats);
+
+    rs_file_close(sig_file);
+    rs_file_close(basis_file);
+    if (result != RS_DONE)
+        return result;
+
+    return result;
+}
+
 rs_result rs_rdiff_delta(char* sig_name, char* new_name, char* delta_name)
 {
 	FILE            *sig_file, *new_file, *delta_file;
@@ -193,4 +214,24 @@ rs_result rs_rdiff_delta(char* sig_name, char* new_name, char* delta_name)
 	rs_file_close(sig_file);
 
 	return result;
+}
+
+rs_result rs_rdiff_patch(char *basis_name, char *delta_name, char *new_name)
+{
+    /*  patch BASIS [DELTA [NEWFILE]] */
+    FILE               *basis_file, *delta_file, *new_file;
+    rs_stats_t          stats;
+    rs_result           result;
+
+    basis_file = rs_file_open(basis_name, "rb");
+    delta_file = rs_file_open(delta_name, "rb");
+    new_file = rs_file_open(new_name, "wb");
+
+    result = rs_patch_file(basis_file, delta_file, new_file, &stats);
+
+    rs_file_close(new_file);
+    rs_file_close(delta_file);
+    rs_file_close(basis_file);
+
+    return result;
 }
