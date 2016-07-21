@@ -24,6 +24,7 @@ INCLUDE(CMakeDependentOption)
 set(LIBRSYNC_MAJOR_VERSION 2)
 set(LIBRSYNC_MINOR_VERSION 0)
 set(LIBRSYNC_PATCH_VERSION 1)
+set(BUILD_RDIFF 0)
 
 set(LIBRSYNC_VERSION
   ${LIBRSYNC_MAJOR_VERSION}.${LIBRSYNC_MINOR_VERSION}.${LIBRSYNC_PATCH_VERSION})
@@ -281,7 +282,7 @@ set(rsync_LIB_SRCS
     src/whole.c
     src/blake2b-ref.c)
 
-add_library(rsync STATIC ${rsync_LIB_SRCS})
+add_library(rsync SHARED ${rsync_LIB_SRCS})
 
 # Optionally link zlib and bzip2 if
 # - compression is enabled
