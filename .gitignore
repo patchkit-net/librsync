@@ -58,3 +58,5 @@ doxygen_sqlite3.db
 .ninja_log
 build.ninja
 rules.ninja
+vs_proj_32/
+vs_proj_64/
