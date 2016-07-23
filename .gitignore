@@ -5,9 +5,7 @@ CTestTestfile.cmake
 config.h
 *.cbp
 librsync-config.h
-librsync.so*
 librsync.a
-librsync*.dylib
 Makefile
 CMakeFiles
 *.lo
@@ -17,7 +15,6 @@ librsync-[0-9]*tar.gz
 librsync-[0-9]*/
 /m4/
 tags
-*.dylib
 cmake_install.cmake
 *.la
 src/prototab.c
