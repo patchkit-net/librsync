@@ -74,6 +74,15 @@ struct rs_filebuf {
         size_t          buf_len;
 };
 
+static const size_t strerror_buffer_size = 128;
+static char strerror_buffer[strerror_buffer_size];
+
+char* strerror_wrap(int err)
+{
+	strerror_s(strerror_buffer, strerror_buffer_size, err);
+
+	return strerror_buffer;
+}
 
 rs_filebuf_t *rs_filebuf_new(FILE *f, size_t buf_len)
 {
@@ -139,7 +148,7 @@ rs_result rs_infilebuf_fill(rs_job_t *job, rs_buffers_t *buf,
         }
         if (ferror(f)) {
             rs_error("error filling buf from file: %s",
-                     strerror(errno));
+                     strerror_wrap(errno));
             return RS_IO_ERROR;
         } else {
             rs_error("no error bit, but got %d return when trying to read",
@@ -191,7 +200,7 @@ rs_result rs_outfilebuf_drain(rs_job_t *job, rs_buffers_t *buf, void *opaque)
         result = fwrite(fb->buf, 1, present, f);
         if (present != result) {
             rs_error("error draining buf to file: %s",
-                     strerror(errno));
+                     strerror_wrap(errno));
             return RS_IO_ERROR;
         }
 
@@ -211,13 +220,13 @@ rs_result rs_file_copy_cb(void *arg, rs_long_t pos, size_t *len, void **buf)
     FILE       *f = (FILE *) arg;
 
     if (fseek(f, pos, SEEK_SET)) {
-        rs_log(RS_LOG_ERR, "seek failed: %s", strerror(errno));
+        rs_log(RS_LOG_ERR, "seek failed: %s", strerror_wrap(errno));
         return RS_IO_ERROR;
     }
 
     got = fread(*buf, 1, *len, f);
     if (got == -1) {
-        rs_error("read error: %s", strerror(errno));
+        rs_error("read error: %s", strerror_wrap(errno));
         return RS_IO_ERROR;
     } else if (got == 0) {
         rs_error("unexpected eof on fd%d", fileno(f));
