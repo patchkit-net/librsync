@@ -18,8 +18,6 @@ tags
 *.dylib
 cmake_install.cmake
 *.la
-src/prototab.c
-src/prototab.h
 doc/Doxyfile
 tests/isprefix.driver
 html
@@ -27,15 +25,22 @@ latex
 Testing
 *.user
 
+# CMake generated Doxygen files
+CMakeDoxyfile.in
+CMakeDoxygenDefaults.cmake
+
 # Editor temp files
 .sw?
 .*.sw?
+*~
 
 # OSX build outputs
 *.dSYM
 
 # Test binaries
-isprefix_test
+*_test
+*_test.exe
+*_test.exe.manifest
 
 *.bak
 
@@ -56,3 +61,8 @@ doxygen_sqlite3.db
 .ninja_log
 build.ninja
 rules.ninja
+
+# Microsoft Visual Studio build files
+*.sln
+*.vcxproj
+*.vcxproj.filters

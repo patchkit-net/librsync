@@ -19,33 +19,25 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
-                                /* 
+                                /*=
                                  | On heroin, I have all the answers.
                                  */
 
-
 #include "config.h"
-
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-
-#include "util.h"
 #include "librsync.h"
+#include "util.h"
 #include "trace.h"
 
-void
-rs_bzero(void *buf, size_t size)
+void rs_bzero(void *buf, size_t size)
 {
     memset(buf, 0, size);
 }
 
-
-void *
-rs_alloc_struct0(size_t size, char const *name)
+void *rs_alloc_struct0(size_t size, char const *name)
 {
-    void           *p;
+    void *p;
 
     if (!(p = malloc(size))) {
         rs_fatal("couldn't allocate instance of %s", name);
@@ -54,16 +46,23 @@ rs_alloc_struct0(size_t size, char const *name)
     return p;
 }
 
-
-
-void *
-rs_alloc(size_t size, char const *name)
+void *rs_alloc(size_t size, char const *name)
 {
-    void           *p;
+    void *p;
 
     if (!(p = malloc(size))) {
         rs_fatal("couldn't allocate instance of %s", name);
     }
 
+    return p;
+}
+
+void *rs_realloc(void *ptr, size_t size, char const *name)
+{
+    void *p;
+
+    if (!(p = realloc(ptr, size))) {
+        rs_fatal("couldn't reallocate instance of %s", name);
+    }
     return p;
 }

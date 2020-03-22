@@ -19,117 +19,67 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-
-/*
- * TODO: A function like perror that includes strerror output.  Apache
- * does this by adding flags as well as the severity level which say
- * whether such information should be included.
- */
-
-
-/*
+/** \file trace.h
+ * logging functions.
+ *
  * trace may be turned off.
  *
- * error is always on, but you can return and continue in some way
+ * error is always on, but you can return and continue in some way.
  *
- * fatal terminates the whole process
- */
-
-
-
-/* There is no portable way in C99 to printf 64-bit types.  Many
- * platforms do have a format which will do it, but it's not
- * standardized.  Therefore these macros.
+ * fatal terminates the whole process.
  *
- * Not all platforms using gnu C necessarily have a corresponding
- * printf, but it's probably a good starting point.  Most unix systems
- * seem to use %ll.
- */
-#if defined(HAVE_FSEEKO64) && defined(WIN32)
-#  define PRINTF_CAST_U64(x) ((off64_t) (x))
-#  define PRINTF_FORMAT_U64 "%I64u"
-#elif SIZEOF_LONG == 8
-#  define PRINTF_CAST_U64(x) ((unsigned long) (x))
-#  define PRINTF_FORMAT_U64 "%lu"
-#elif defined(__GNUC__)
-#  define PRINTF_CAST_U64(x) ((unsigned long long) (x))
-#  define PRINTF_FORMAT_U64 "%llu"
+ * \todo A function like perror that includes strerror output. Apache does this
+ * by adding flags as well as the severity level which say whether such
+ * information should be included. */
+
+#include <inttypes.h>
+/* Printf format patters for standard librsync types. */
+#define FMT_LONG "%"PRIdMAX
+#define FMT_WEAKSUM "%08"PRIx32
+/* Old MSVC compilers don't support "%zu" and have "%Iu" instead. */
+#ifdef HAVE_PRINTF_Z
+#  define FMT_SIZE "%zu"
 #else
-   /* This conversion works everywhere, but it's probably pretty slow.
-    *
-    * Note that 'f' takes a double vararg, not a float. */
-#  define PRINTF_CAST_U64(x) ((double) (x))
-#  define PRINTF_FORMAT_U64 "%.0f"
+#  define FMT_SIZE "%Iu"
 #endif
 
+/* Some old compilers don't support __func_ and have __FUNCTION__ instead. */
+#ifndef HAVE___FUNC__
+#  ifdef HAVE___FUNCTION__
+#    define __func__ __FUNCTION__
+#  else
+#    define __func__ ""
+#  endif
+#endif
 
-#if defined(__clang__) || defined(__GNUC__)
-/*
- * TODO: Also look for the C9X predefined identifier `_function', or
- * whatever it's called.
- */
+/* Non-GNUC compatible compilers don't support __attribute__(). */
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
 
 void rs_log0(int level, char const *fn, char const *fmt, ...)
-    __attribute__ ((format(printf, 3, 4)));
+    __attribute__((format(printf, 3, 4)));
 
-#ifdef DO_RS_TRACE
-#  define rs_trace(fmt, arg...)                            \
-    do { rs_log0(RS_LOG_DEBUG, __FUNCTION__, fmt , ##arg);  \
-    } while (0)
-#else
-#  define rs_trace(fmt, arg...)
-#endif	/* !DO_RS_TRACE */
-
-#define rs_log(l, s, str...) do {              \
-     rs_log0((l), __FUNCTION__, (s) , ##str);  \
-     } while (0)
-
-
-#define rs_error(s, str...) do {                       \
-     rs_log0(RS_LOG_ERR,  __FUNCTION__, (s) , ##str);  \
-     } while (0)
-
-
-#define rs_fatal(s, str...) do {               \
-     rs_log0(RS_LOG_CRIT,  __FUNCTION__,       \
-	      (s) , ##str);                    \
-     abort();                                  \
-     } while (0)
-
-
-#else /************************* ! __GNUC__ */
-#  define rs_trace rs_trace0
-#  define rs_fatal rs_fatal0
-#  define rs_error rs_error0
-#  define rs_log   rs_log0_nofn
-#endif				/* ! __GNUC__ */
-
-void rs_trace0(char const *s, ...);
-void rs_fatal0(char const *s, ...);
-void rs_error0(char const *s, ...);
-void rs_log0(int level, char const *fn, char const *fmt, ...);
-void rs_log0_nofn(int level, char const *fmt, ...);
-
-enum {
-    RS_LOG_PRIMASK       = 7,   /**< Mask to extract priority
-                                   part. \internal */
-
-    RS_LOG_NONAME        = 8    /**< \b Don't show function name in
-                                   message. */
-};
-
-
-/**
- * \macro rs_trace_enabled()
- *
- * Call this before putting too much effort into generating trace
- * messages.
- */
-
-extern int rs_trace_level;
-
+/** \def rs_trace_enabled()
+ * Call this before putting too much effort into generating trace messages. */
 #ifdef DO_RS_TRACE
 #  define rs_trace_enabled() ((rs_trace_level & RS_LOG_PRIMASK) >= RS_LOG_DEBUG)
+#  define rs_trace(...) rs_log0(RS_LOG_DEBUG, __func__, __VA_ARGS__)
 #else
 #  define rs_trace_enabled() 0
-#endif
+#  define rs_trace(...)
+#endif                          /* !DO_RS_TRACE */
+
+#define rs_log(l, ...) rs_log0((l), __func__, __VA_ARGS__)
+#define rs_error(...) rs_log0(RS_LOG_ERR,  __func__, __VA_ARGS__)
+#define rs_fatal(...) do { \
+    rs_log0(RS_LOG_CRIT, __func__, __VA_ARGS__); \
+    abort(); \
+} while (0)
+
+enum {
+    RS_LOG_PRIMASK = 7,         /**< Mask to extract priority part. \internal */
+    RS_LOG_NONAME = 8           /**< \b Don't show function name in message. */
+};
+
+extern int rs_trace_level;

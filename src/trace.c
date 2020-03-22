@@ -19,203 +19,99 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-                                     /*
+                                     /*=
                                       | Finality is death.
                                       | Perfection is finality.
                                       | Nothing is perfect.
                                       | There are lumps in it.
                                       */
 
-
-
-/*
- * TODO: Have a bit set in the log level that says not to include the
- * function name.
- */
+/** \file trace.c
+ * logging and debugging output.
+ *
+ * \todo Have a bit set in the log level that says not to include the function
+ * name. */
 
 #include "config.h"
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#else
-#define STDERR_FILENO 2
-#endif
-#include <stdio.h>
-#ifdef HAVE_SYS_FILE_H
-#include <sys/file.h>
-#endif
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <stdarg.h>
-
 #include "librsync.h"
-#include "util.h"
 #include "trace.h"
+#include "util.h"
 
-rs_trace_fn_t  *rs_trace_impl = rs_trace_stderr;
+rs_trace_fn_t *rs_trace_impl = rs_trace_stderr;
 
 int rs_trace_level = RS_LOG_INFO;
 
-#ifdef HAVE_PROGRAM_INVOCATION_NAME
-#  define MY_NAME program_invocation_short_name
-#else
-#  define MY_NAME "librsync"
-#endif
+#define MY_NAME "librsync"
 
 static void rs_log_va(int level, char const *fn, char const *fmt, va_list va);
 
-#if SIZEOF_SIZE_T > SIZEOF_LONG
-#  warning size_t is larger than a long integer, values in trace messages may be wrong
-#endif
-
-
-/**
- * Log severity strings, if any.  Must match ordering in
- * ::rs_loglevel.
- */
+/** Log severity strings, if any. Must match ordering in ::rs_loglevel. */
 static const char *rs_severities[] = {
     "EMERGENCY! ", "ALERT! ", "CRITICAL! ", "ERROR: ", "Warning: ",
     "", "", ""
 };
 
-
-
-/**
- * \brief Set the destination of trace information.
+/** Set the destination of trace information.
  *
- * The callback scheme allows for use within applications that may
- * have their own particular ways of reporting errors: log files for a
- * web server, perhaps, and an error dialog for a browser.
+ * The callback scheme allows for use within applications that may have their
+ * own particular ways of reporting errors: log files for a web server,
+ * perhaps, and an error dialog for a browser.
  *
- * \todo Do we really need such fine-grained control, or just yes/no
- * tracing?
- */
-void
-rs_trace_to(rs_trace_fn_t * new_impl)
+ * \todo Do we really need such fine-grained control, or just yes/no tracing? */
+LIBRSYNC_EXPORT void rs_trace_to(rs_trace_fn_t *new_impl)
 {
     rs_trace_impl = new_impl;
 }
 
-
-void
-rs_trace_set_level(rs_loglevel level)
+LIBRSYNC_EXPORT void rs_trace_set_level(rs_loglevel level)
 {
     rs_trace_level = level;
 }
 
-
-static void
-rs_log_va(int flags, char const *fn, char const *fmt, va_list va)
+static void rs_log_va(int flags, char const *fn, char const *fmt, va_list va)
 {
     int level = flags & RS_LOG_PRIMASK;
-    
+
     if (rs_trace_impl && level <= rs_trace_level) {
-        char            buf[1000];
-        char            full_buf[1000];
+        char buf[1000];
+        char full_buf[1040];
 
-        vsnprintf(buf, sizeof buf - 1, fmt, va);
-
-        if (flags & RS_LOG_NONAME) {
-            snprintf(full_buf, sizeof full_buf - 1,
-                     "%s: %s%s\n",
-                     MY_NAME, rs_severities[level], buf);
+        vsnprintf(buf, sizeof(buf), fmt, va);
+        if (flags & RS_LOG_NONAME || !(*fn)) {
+            snprintf(full_buf, sizeof(full_buf), "%s: %s%s\n", MY_NAME,
+                     rs_severities[level], buf);
         } else {
-            snprintf(full_buf, sizeof full_buf - 1,
-                     "%s: %s(%s) %s\n",
-                     MY_NAME, rs_severities[level], fn, buf);
+            snprintf(full_buf, sizeof(full_buf), "%s: %s(%s) %s\n", MY_NAME,
+                     rs_severities[level], fn, buf);
         }
-
-	rs_trace_impl(level, full_buf);
+        rs_trace_impl(level, full_buf);
     }
 }
 
-
-
-/**
- * Called by a macro, used on platforms where we can't determine the
- * calling function name.
- */
-void
-rs_log0_nofn(int level, char const *fmt, ...)
+/* Called by a macro that prepends the calling function name, etc. */
+void rs_log0(int level, char const *fn, char const *fmt, ...)
 {
-    va_list         va;
-
-    va_start(va, fmt);
-    rs_log_va(level, PACKAGE, fmt, va);
-    va_end(va);
-}
-
-
-/* Called by a macro that prepends the calling function name,
- * etc.  */
-void
-rs_log0(int level, char const *fn, char const *fmt, ...)
-{
-    va_list         va;
+    va_list va;
 
     va_start(va, fmt);
     rs_log_va(level, fn, fmt, va);
     va_end(va);
 }
 
-
-void
-rs_trace_stderr(rs_loglevel UNUSED(level), char const *msg)
+LIBRSYNC_EXPORT void rs_trace_stderr(rs_loglevel UNUSED(level), char const *msg)
 {
-    /* NOTE NO TRAILING NUL */
-    write(STDERR_FILENO, msg, strlen(msg));
+    fputs(msg, stderr);
 }
 
-
-/* This is called directly if the machine doesn't allow varargs
- * macros. */
-void
-rs_fatal0(char const *s, ...)
-{
-    va_list	va;
-
-    va_start(va, s);
-    rs_log_va(RS_LOG_CRIT, PACKAGE, s, va);
-    va_end(va);
-    abort();
-}
-
-
-/* This is called directly if the machine doesn't allow varargs
- * macros. */
-void
-rs_error0(char const *s, ...)
-{
-    va_list	va;
-
-    va_start(va, s);
-    rs_log_va(RS_LOG_ERR, PACKAGE, s, va);
-    va_end(va);
-}
-
-
-/* This is called directly if the machine doesn't allow varargs
- * macros. */
-void
-rs_trace0(char const *s, ...)
-{
-#ifdef DO_RS_TRACE
-    va_list	va;
-
-    va_start(va, s);
-    rs_log_va(RS_LOG_DEBUG, PACKAGE, s, va);
-    va_end(va);
-#endif /* !DO_RS_TRACE */
-}
-
-
-int
-rs_supports_trace(void)
+LIBRSYNC_EXPORT int rs_supports_trace(void)
 {
 #ifdef DO_RS_TRACE
     return 1;
 #else
     return 0;
-#endif				/* !DO_RS_TRACE */
+#endif                          /* !DO_RS_TRACE */
 }

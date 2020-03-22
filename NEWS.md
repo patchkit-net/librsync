@@ -1,25 +1,134 @@
 # librsync NEWS
 
-## librsync 2.0.1
+## librsync 2.2.2
 
 NOT RELEASED YET
 
+ * Improved C99 compatibility. Add `-std=c99 -pedantic` to `CMAKE_C_FLAGS` for
+   gcc and clang. Fix all C99 warnings by making all code C99 compliant. Tidy
+   all CMake checks, #cmakedefines, and #includes. Fix 64bit support for
+   mdfour checksums (texierp, dbaarda,
+   https://github.com/librsync/librsync/pull/181,
+   https://github.com/librsync/librsync/pull/182)
+
+ * Usage clarified in rdiff (1) man page. (AaronM04,
+   https://github.com/librsync/librsync/pull/180)
+
+## librsync 2.2.1
+
+Released 2019-10-16
+
+ * Fix #176 hangs calculating deltas for files larger than 4GB. (dbaarda,
+   https://github.com/librsync/librsync/pull/177)
+
+## librsync 2.2.0
+
+Released 2019-10-12
+
+ * Bump minor version from 2.1.0 to 2.2.0 to reflect additional RabinKarp
+   rollsum support.
+
+ * Fix MSVC builds by adding missing LIBRSYNC_EXPORT to variables in
+   librsync.h, add -DLIBRSYNC_STATIC_DEFINE to the sumset_test target,
+   and correctly install .dll files in the bin directory.
+   (adsun701, https://github.com/librsync/librsync/pull/161)
+
+ * Add RabinKarp rollsum support and make it the default. RabinKarp is a much
+   better rolling hash, which reduces the risk of hash collision corruption
+   and speeds up delta calculations. The rdiff cmd gets a new `-R
+   (rollsum|rabinkarp)` argument with the default being `rabinkarp`, Use `-R
+   rollsum` to generate backwards-compatible signatures. (dbaarda,
+   https://github.com/librsync/librsync/issues/3)
+
+ * Use single-byte literal commands for small inserts in deltas. This makes
+   each small insert use 1 less byte in deltas. (dbaarda,
+   https://github.com/librsync/librsync/issues/120)
+
+ * Fix multiple warnings (cross-)compiling for windows. (Adsun701,
+   https://github.com/librsync/librsync/pull/165,
+   https://github.com/librsync/librsync/pull/166)
+
+ * Change rs_file_size() to report -1 instead of 0 for unknown file sizes (not
+   a regular file). (dbaarda https://github.com/librsync/librsync/pull/168)
+
+ * Add cmake BUILD_SHARED_LIBS option for static library support.
+   BUILD_SHARED_LIBS defaults to ON, and can be set to OFF using `ccmake .` to
+   build librsync as a static library. (dbaarda
+   https://github.com/librsync/librsync/pull/169)
+
+ * Fix compile errors and add .gitignore entries for MSVS 2019. Fixes
+   hashtable.h to be C99 compliant. (ardovm
+   https://github.com/librsync/librsync/pull/170)
+
+## librsync 2.1.0
+
+Released 2019-08-19
+
+ * Bump minor version from 2.0.3 to 2.1.0 to reflect additions to librsync.h.
+
+ * Fix exporting of private symbols from librsync library. Add export of
+   useful large file functions `rs_file_open()`, `rs_file_close()`, and
+   `rs_file_size()` to librsync.h. Add export of `rs_signature_log_stats()` to
+   log signature hashtable hit/miss stats. Improve rdiff error output.
+   (dbaarda, https://github.com/librsync/librsync/issues/130)
+
+ * Updated release process to include stable tarballs. (dbaarda,
+   https://github.com/librsync/librsync/issues/146)
+
+ * Remove redundant and broken `--paranoia` argument from rdiff. (dbaarda,
+   https://github.com/librsync/librsync/issues/155)
+
+ * Fix memory leak of `rs_signature_t->block_sigs` when freeing signatures.
+   (telles-simbiose, https://github.com/librsync/librsync/pull/147)
+
+ * Document delta file format. (zmj,
+   https://github.com/librsync/librsync/issues/46)
+
+ * Fix up doxygen comments. (dbaarda,
+   https://github.com/librsync/librsync/pull/151)
+
+## librsync 2.0.2
+
+Released 2018-02-27
+
+ * Improve CMake install paths configuration (wRAR,
+   https://github.com/librsync/librsync/pull/133) and platform support
+   checking when cross-compiling (fornwall,
+   https://github.com/librsync/librsync/pull/136).
+
+ * Fix Unaligned memory access for rs_block_sig_init() (dbaarda,
+   https://github.com/librsync/librsync/issues/135).
+
+ * Fix hashtable_test.c name collision for key_t in sys/types.h on some
+   platforms (dbaarda, https://github.com/librsync/librsync/issues/134)
+
+ * Format code with consistent style, adding `make tidy` and `make
+   tidyc` targets for reformating code and comments. (dbaarda,
+   https://github.com/librsync/librsync/issues/125)
+
+ * Removed perl as a build dependency. Note it is still required for some
+   tests. (dbaarda, https://github.com/librsync/librsync/issues/75)
+
+ * Update RPM spec file for v2.0.2 and fix cmake man page install. (deajan,
+   https://github.com/librsync/librsync/issues/47)
+
+## librsync 2.0.1
+
+Released 2017-10-17
+
  * Extensively reworked Doxygen documentation, now available at
-   http://librsync.sourcefrog.net/
-   (Martin Pool)
+   http://librsync.sourcefrog.net/ (Martin Pool)
 
  * Removed some declarations from librsync.h that were unimplemented or no
-   longer ever useful: `rs_work_options`, `rs_accum_value`.
-   Remove declaration of unimplemented `rs_mdfour_file()`.
-   (Martin Pool)
+   longer ever useful: `rs_work_options`, `rs_accum_value`. Remove
+   declaration of unimplemented `rs_mdfour_file()`. (Martin Pool)
 
  * Remove shipped `snprintf` code: no longer acutally linked after changing to
    CMake, and since it's part of C99 it should be widely available.
    (Martin Pool)
 
  * Document that Ninja (http://ninja-build.org/) is supported under CMake.
-   It's a bit faster and nicer than Make.
-   (Martin Pool)
+   It's a bit faster and nicer than Make. (Martin Pool)
 
  * `make check` (or `ninja check` etc) will now build and run the tests.
    Previously due to a CMake limitation, `make test` would only run existing
@@ -27,14 +136,70 @@ NOT RELEASED YET
    (Martin Pool, https://github.com/librsync/librsync/issues/49)
 
  * Added cmake options to exclude rdiff target and compression from build.
-   See install documentation for details.
-   Thanks to Michele Bertasi.
+   See install documentation for details. Thanks to Michele Bertasi.
 
  * `popt` is only needed when `rdiff` is being built. (gulikoza)
 
- * Use `fseeko64` on mingw. (gulikoza)
+ * Improved large file support for platforms using different variants
+   of `fseek` (`fseeko`, `fseeko64`, `_fseeki64`), `fstat` (`fstat64`,
+   `_fstati64`), and `fileno` (`_fileno`). (dbaarda, charlievieth,
+   gulikoza, marius-nicolae)
 
- * `rdiff -s` option now shows bytes read/written and speed. (gulikoza)
+ * `rdiff -s` option now shows bytes read/written and speed. (gulikoza).
+   For delta operations it also shows hashtable match statistics. (dbaarda)
+
+ * Running rdiff should not overwrite existing files (signatures, deltas and
+   new patched files) by default. If the destination file exists, rdiff will
+   now exit with an error. Add new option -f (--force) to overwrite existing
+   files. (gulikoza)
+
+ * Improve signature memory allocation (doubling size instead of calling
+   realloc for every sig block) and added support for preallocation. See
+   streaming.md job->estimated_signature_count for usage when using the
+   library. `rdiff` uses this by default if possible. (gulikoza, dbaarda)
+
+ * Significantly tidied signature handling code and testing, resulting in more
+   consistent error handling behaviour, and making it easier to plug in
+   alternative weak and strong sum implementations. Also fixed "slack delta"
+   support for delta calculation with no signature. (dbaarda)
+
+ * `stdint.h` and `inttypes.h` from C99 is now required. Removed redundant
+   librsync-config.h header file. (dbaarda)
+
+ * Lots of small fixes for windows platforms and building with MSVC.
+   (lasalvavida, mbrt, dbaarda)
+
+ * New open addressing hashtable implementation that significantly speeds up
+   delta operations, particularly for large files. Also fixed degenerate
+   behaviour with large number of duplicate blocks like runs of zeros
+   in sparse files. (dbaarda)
+
+ * Optional support with cmake option for using libb2 blake2 implementation.
+   Also updated included reference blake2 implementation with bug fixes
+   (dbaarda).
+
+ * Improved default values for input and output buffer sizes. The defaults are
+   now --input-size=0 and --output-size=0, which will choose recommended
+   default sizes based on the --block-size and the operation being performed.
+   (dbaarda)
+
+ * Fixed hanging for truncated input files. It will now correctly report an
+   error indicating an unexpected EOF was encountered. (dbaarda,
+   https://github.com/librsync/librsync/issues/32)
+
+ * Fixed #13 so that faster slack delta's are used for signatures of
+   empty files. (dbaarda,
+   https://github.com/librsync/librsync/issues/13)
+
+ * Fixed #33 so rs_job_iter() doesn't need calling twice with eof=1.
+   Also tidied and optimized it a bit. (dbaarda,
+   https://github.com/librsync/librsync/issues/33)
+
+ * Fixed #55 remove excessive rs_fatal() calls, replacing checks for
+   programming errors with assert statements. Now rs_fatal() will only
+   be called for rare unrecoverable fatal errors like malloc failures or
+   impossibly large inputs. (dbaarda,
+   https://github.com/librsync/librsync/issues/55)
 
 ## librsync 2.0.0
 

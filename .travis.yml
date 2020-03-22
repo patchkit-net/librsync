@@ -5,8 +5,6 @@ language: c
 before_script:
   - cmake --help
   - cmake $CMAKE_OPTIONS $CMAKE_GENERATOR .
-  
-sudo: required
 
 env:
   - CTEST_OUTPUT_ON_FAILURE=1
@@ -18,38 +16,36 @@ addons:
     - libpopt-dev
     - doxygen
     - ninja-build
+  homebrew:
+    packages:
+      - popt
+    update: true
 
 script:
   - make check
 
 matrix:
   include:
-    - compiler: clang
-      os: osx
-      before_install:
-        - brew update
-        - brew install popt
-      script:
-        - make check doc
+    - os: osx
+      compiler: clang
 
-    - dist: precise
-      sudo: false
+    - os: linux
+      compiler: gcc
 
-    - compiler: clang
-      dist: trusty
+    - os: linux
+      compiler: clang
 
-    - compiler: clang
+    - os: linux
+      compiler: clang
       env: CMAKE_GENERATOR="-G Ninja"
-      dist: trusty
-      script:
-        - ninja check doc
+      script: ninja check doc
 
-    - dist: precise
-      sudo: false
+    - os: linux
+      compiler: gcc
+      env: CMAKE_OPTIONS="-D BUILD_SHARED_LIBS=OFF"
+
+    - os: linux
+      compiler: gcc
       env: CMAKE_OPTIONS="-D BUILD_RDIFF=OFF"
-
-
-# Docs are tested on Trusty with Ninja, and on OSX (which might have a more
-# recent Doxygen.)
 
 # vim: shiftwidth=2 expandtab
