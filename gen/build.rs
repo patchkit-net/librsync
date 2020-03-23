@@ -4,12 +4,12 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-
 fn copy_all<P1, P2, I>(src_dir: P1, dst_dir: P2, files: I)
-    where P1: AsRef<Path>,
-          P2: AsRef<Path>,
-          I: IntoIterator,
-          I::Item: AsRef<Path>
+where
+    P1: AsRef<Path>,
+    P2: AsRef<Path>,
+    I: IntoIterator,
+    I::Item: AsRef<Path>,
 {
     for f in files.into_iter() {
         let src = {
@@ -22,7 +22,7 @@ fn copy_all<P1, P2, I>(src_dir: P1, dst_dir: P2, files: I)
             p.push(f.as_ref());
             p
         };
-        fs::copy(&src, &dst).unwrap();
+        fs::copy(&src, &dst).expect(f.as_ref().as_os_str().to_str().unwrap());
     }
 }
 
@@ -45,6 +45,5 @@ fn main() {
         dst
     };
     fs::create_dir_all(&dst).unwrap();
-    copy_all(&src, &dst, vec!["config.h", "librsync-config.h"]);
-    copy_all(&src, "../static", vec!["prototab.c", "prototab.h"]);
+    copy_all(&src, &dst, vec!["config.h"]);
 }
