@@ -74,7 +74,7 @@ struct rs_filebuf {
         size_t          buf_len;
 };
 
-static const size_t strerror_buffer_size = 128;
+#define strerror_buffer_size 128
 static char strerror_buffer[strerror_buffer_size];
 
 char* strerror_wrap(int err)
