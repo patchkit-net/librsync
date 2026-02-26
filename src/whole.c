@@ -178,7 +178,14 @@ rs_result rs_rdiff_sig(char *basis_name, char *sig_name, size_t block_len)
     }
 
     basis_file = rs_file_open(basis_name, "rb");
+    if (!basis_file)
+        return RS_IO_ERROR;
+
     sig_file = rs_file_open(sig_name, "wb");
+    if (!sig_file) {
+        rs_file_close(basis_file);
+        return RS_IO_ERROR;
+    }
 
     result = rs_sig_file(basis_file, sig_file, block_len, 0,
         RS_BLAKE2_SIG_MAGIC, &stats);
@@ -199,15 +206,37 @@ rs_result rs_rdiff_delta(char* sig_name, char* new_name, char* delta_name)
 	rs_stats_t      stats;
 
 	sig_file = rs_file_open(sig_name, "rb");
+	if (!sig_file)
+		return RS_IO_ERROR;
+
 	new_file = rs_file_open(new_name, "rb");
+	if (!new_file) {
+		rs_file_close(sig_file);
+		return RS_IO_ERROR;
+	}
+
 	delta_file = rs_file_open(delta_name, "wb");
+	if (!delta_file) {
+		rs_file_close(new_file);
+		rs_file_close(sig_file);
+		return RS_IO_ERROR;
+	}
 
 	result = rs_loadsig_file(sig_file, &sumset, &stats);
-	if (result != RS_DONE)
+	if (result != RS_DONE) {
+		rs_file_close(delta_file);
+		rs_file_close(new_file);
+		rs_file_close(sig_file);
 		return result;
+	}
 
-	if ((result = rs_build_hash_table(sumset)) != RS_DONE)
+	if ((result = rs_build_hash_table(sumset)) != RS_DONE) {
+		rs_free_sumset(sumset);
+		rs_file_close(delta_file);
+		rs_file_close(new_file);
+		rs_file_close(sig_file);
 		return result;
+	}
 
 	result = rs_delta_file(sumset, new_file, delta_file, &stats);
 
@@ -228,8 +257,21 @@ rs_result rs_rdiff_patch(char *basis_name, char *delta_name, char *new_name)
     rs_result           result;
 
     basis_file = rs_file_open(basis_name, "rb");
+    if (!basis_file)
+        return RS_IO_ERROR;
+
     delta_file = rs_file_open(delta_name, "rb");
+    if (!delta_file) {
+        rs_file_close(basis_file);
+        return RS_IO_ERROR;
+    }
+
     new_file = rs_file_open(new_name, "wb");
+    if (!new_file) {
+        rs_file_close(delta_file);
+        rs_file_close(basis_file);
+        return RS_IO_ERROR;
+    }
 
     result = rs_patch_file(basis_file, delta_file, new_file, &stats);
 

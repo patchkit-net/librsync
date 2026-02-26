@@ -37,6 +37,11 @@
 #include <string.h>
 #include <errno.h>
 
+#if _WIN32
+#include <windows.h>
+#include <io.h>
+#endif
+
 #include "librsync.h"
 #include "fileutil.h"
 #include "trace.h"
@@ -46,7 +51,13 @@
  * \brief Open a file, with special handling for `-' or unspecified
  * parameters on input and output.
  *
- * \param fopen-style mode string.
+ * On Windows, filenames are interpreted as UTF-8 and converted to
+ * wide characters for _wfopen, supporting Unicode paths and the
+ * \\?\ extended-length path prefix.
+ *
+ * \param filename path to open, or "-" for stdin/stdout.
+ * \param mode fopen-style mode string.
+ * \return opened FILE pointer, or NULL on error.
  */
 FILE *
 rs_file_open(char const *filename, char const *mode)
@@ -70,13 +81,43 @@ rs_file_open(char const *filename, char const *mode)
 	}
     }
 
-    if (!(f = fopen(filename, mode))) {
+#if _WIN32
+    {
+	int wlen = MultiByteToWideChar(CP_UTF8, 0, filename, -1, NULL, 0);
+	if (wlen > 0) {
+	    wchar_t *wfilename = (wchar_t *)malloc(wlen * sizeof(wchar_t));
+	    if (!wfilename) {
+		f = NULL;
+	    } else {
+		MultiByteToWideChar(CP_UTF8, 0, filename, -1, wfilename, wlen);
+
+		int wmlen = MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
+		wchar_t *wmode = (wmlen > 0) ? (wchar_t *)malloc(wmlen * sizeof(wchar_t)) : NULL;
+		if (!wmode) {
+		    free(wfilename);
+		    f = NULL;
+		} else {
+		    MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, wmlen);
+		    f = _wfopen(wfilename, wmode);
+		    free(wmode);
+		    free(wfilename);
+		}
+	    }
+	} else {
+	    f = NULL;
+	}
+    }
+#else
+    f = fopen(filename, mode);
+#endif
+
+    if (!f) {
 	rs_error("Error opening \"%s\" for %s: %s", filename,
 		  is_write ? "write" : "read",
 		  strerror(errno));
-	exit(RS_IO_ERROR);
+	return NULL;
     }
-    
+
     return f;
 }
 
