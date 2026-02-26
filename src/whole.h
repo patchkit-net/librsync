@@ -26,6 +26,7 @@
 
 #  include <stdio.h>
 #  include "librsync.h"
+#  include "librsync_export.h"
 
 /** Run a job continuously, with input to/from the two specified files.
  *
@@ -46,5 +47,17 @@
  * \return RS_DONE if the job completed, or otherwise an error result. */
 rs_result rs_whole_run(rs_job_t *job, FILE *in_file, FILE *out_file,
                        int inbuflen, int outbuflen);
+
+/** PatchKit wrapper: generate signature from file paths. */
+LIBRSYNC_EXPORT rs_result rs_rdiff_sig(char *basis_name, char *sig_name,
+                                       size_t block_len);
+
+/** PatchKit wrapper: generate delta from file paths. */
+LIBRSYNC_EXPORT rs_result rs_rdiff_delta(char *sig_name, char *new_name,
+                                         char *delta_name);
+
+/** PatchKit wrapper: apply patch from file paths. */
+LIBRSYNC_EXPORT rs_result rs_rdiff_patch(char *basis_name, char *delta_name,
+                                         char *new_name);
 
 #endif                          /* !WHOLE_H */

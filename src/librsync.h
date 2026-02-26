@@ -614,6 +614,31 @@ LIBRSYNC_EXPORT rs_result rs_delta_file(rs_signature_t *, FILE *new_file,
  * \sa \ref api_whole */
 LIBRSYNC_EXPORT rs_result rs_patch_file(FILE *basis_file, FILE *delta_file,
                                         FILE *new_file, rs_stats_t *);
+
+/** PatchKit wrapper: generate signature from file paths.
+ *
+ * \param basis_name path to basis file.
+ * \param sig_name path to output signature file.
+ * \param block_len block size (0 for default). */
+LIBRSYNC_EXPORT rs_result rs_rdiff_sig(char *basis_name, char *sig_name,
+                                       size_t block_len);
+
+/** PatchKit wrapper: generate delta from file paths.
+ *
+ * \param sig_name path to signature file.
+ * \param new_name path to new file.
+ * \param delta_name path to output delta file. */
+LIBRSYNC_EXPORT rs_result rs_rdiff_delta(char *sig_name, char *new_name,
+                                         char *delta_name);
+
+/** PatchKit wrapper: apply patch from file paths.
+ *
+ * \param basis_name path to basis file.
+ * \param delta_name path to delta file.
+ * \param new_name path to output patched file. */
+LIBRSYNC_EXPORT rs_result rs_rdiff_patch(char *basis_name, char *delta_name,
+                                         char *new_name);
+
 #  endif                        /* !RSYNC_NO_STDIO_INTERFACE */
 
 #  ifdef __cplusplus
